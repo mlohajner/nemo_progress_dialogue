@@ -62,7 +62,7 @@ After:
 ## ⚙️ Compatibility
 
 - Nemo File Manager
-- Cinnamon Desktop Environment
+- While Nemo is typically used within Cinnamon, this patch only depends on Nemo and can run independently in other compatible environments.
 
 ---
 
@@ -79,15 +79,3 @@ It does not change:
 ## 📌 Status
 
 Work-in-progress / experimental patch (adjust as needed)
-
----
-
-## 📷 Preview
-
-_Add screenshots or GIFs here if available._
-
----
-
-## 📜 License
-
-Specify your license here (e.g. GPL, MIT, etc.)
