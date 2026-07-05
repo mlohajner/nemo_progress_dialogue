@@ -1,5 +1,5 @@
 # Nemo Transfer Speed Graph Patch
-
+---
 A UI enhancement patch for **Nemo file manager** that adds a real-time **transfer speed / bandwidth graph** during file operations (copy, move, etc.).
 
 It upgrades the default progress dialog with live throughput visualization, similar to:
@@ -7,10 +7,8 @@ It upgrades the default progress dialog with live throughput visualization, simi
 - Dolphin file manager (KDE)
 - Windows File Explorer
 
----
-
 ## Overview
-
+---
 Nemo’s default file operation dialog shows only basic progress information:
 
 - Progress percentage
@@ -19,10 +17,8 @@ Nemo’s default file operation dialog shows only basic progress information:
 
 This patch enhances it by adding a **real-time bandwidth graph**, making transfer performance visible over time.
 
----
-
 ## Features
-
+---
 - Real-time transfer speed monitoring (KB/s, MB/s)
 - Live bandwidth graph over time
 - Automatic graph scaling based on throughput
@@ -33,7 +29,7 @@ This patch enhances it by adding a **real-time bandwidth graph**, making transfe
 ---
 
 ## Motivation
-
+---
 When working with large file transfers, the default UI hides useful performance information.
 
 This patch improves visibility for:
@@ -44,10 +40,8 @@ This patch improves visibility for:
 
 Instead of only showing *progress %,* users can now see **how fast the transfer is actually performing and how it changes over time**.
 
----
-
 ## What this adds
-
+---
 Before:
 - Progress bar only
 - Estimated time remaining
@@ -61,21 +55,15 @@ After:
 
 ![Nemo Progress Dialog](1%29%20motivation%20%26%20screenshots/dialogue3.png)
 
----
-
 ## Compatibility
-
+---
 - Nemo File Manager
 - While Nemo is typically used within Cinnamon, this patch only depends on Nemo and can run independently in other compatible environments.
 
----
-
 ## Notes
-
+---
 This patch only modifies the **UI layer of file operations**.
 
 It does not change:
 - file transfer logic
 - backend I/O implementation
-
----
