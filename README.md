@@ -52,14 +52,14 @@ Before:
 - Progress bar only
 - Estimated time remaining
 
-<img classic1.png>
+![Nemo Progress Dialog](1)%20motivation%20&amp;%20screenshots/classic1.png)
 
 After:
 - Progress bar
 - Real-time speed indicator
 - Bandwidth history graph
 
-<img dialogue3.png>
+![Nemo Progress Dialog](1)%20motivation%20&amp;%20screenshots/dialogue3.png)
 
 ---
 
