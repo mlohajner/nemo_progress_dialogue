@@ -9,7 +9,7 @@ It upgrades the default progress dialog with live throughput visualization, simi
 
 ---
 
-## ✨ Overview
+## Overview
 
 Nemo’s default file operation dialog shows only basic progress information:
 
@@ -21,7 +21,7 @@ This patch enhances it by adding a **real-time bandwidth graph**, making transfe
 
 ---
 
-## 📊 Features
+## Features
 
 - Real-time transfer speed monitoring (KB/s, MB/s)
 - Live bandwidth graph over time
@@ -32,7 +32,7 @@ This patch enhances it by adding a **real-time bandwidth graph**, making transfe
 
 ---
 
-## 💡 Motivation
+## Motivation
 
 When working with large file transfers, the default UI hides useful performance information.
 
@@ -46,27 +46,31 @@ Instead of only showing *progress %,* users can now see **how fast the transfer 
 
 ---
 
-## 🧠 What this adds
+## What this adds
 
 Before:
 - Progress bar only
 - Estimated time remaining
+
+<img classic1.png>
 
 After:
 - Progress bar
 - Real-time speed indicator
 - Bandwidth history graph
 
+<img dialogue3.png>
+
 ---
 
-## ⚙️ Compatibility
+## Compatibility
 
 - Nemo File Manager
 - While Nemo is typically used within Cinnamon, this patch only depends on Nemo and can run independently in other compatible environments.
 
 ---
 
-## 📝 Notes
+## Notes
 
 This patch only modifies the **UI layer of file operations**.
 
@@ -75,7 +79,3 @@ It does not change:
 - backend I/O implementation
 
 ---
-
-## 📌 Status
-
-Work-in-progress / experimental patch (adjust as needed)
