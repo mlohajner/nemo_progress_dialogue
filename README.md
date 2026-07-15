@@ -59,6 +59,7 @@ After:
 
 - Nemo File Manager
 - While Nemo is typically used within Cinnamon, this patch only depends on Nemo and can run independently in other compatible environments.
+- Linux Mint fork [here...](https://github.com/cori77-hub/nemo_progress_dialogue)
 
 ## Notes
 
