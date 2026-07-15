@@ -8,6 +8,8 @@ The main challenge is supporting multiple distribution-specific variants and sub
 
 If there is sufficient interest, a future version of the patch may be developed to extend Nemo's file transfer dialog with real-time bandwidth visualization across multiple distributions.
 
+[**Linux Mint checkout the Mint fork of this patch here...**](https://github.com/cori77-hub/nemo_progress_dialogue)
+
 ## Related source files
 
 Until then, you can explore the relevant changes in the following source files:
