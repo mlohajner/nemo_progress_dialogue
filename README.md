@@ -53,8 +53,9 @@ After:
 - Real-time speed indicator
 - Bandwidth history graph
 
-![Nemo Progress Dialog](1%29%20motivation%20%26%20screenshots/dialogue3.png)
-![Nemo Delete Dialog](1%29%20motivation%20%26%20screenshots/delete1.png)
+| Nemo Transfer Progress | Nemo Delete Progress |
+|:-:|:-:|
+| ![Nemo Transfer](1%29%20motivation%20%26%20screenshots/dialogue3.png) | ![Nemo Delete](1%29%20motivation%20%26%20screenshots/delete1.png) |
 
 ## Compatibility
 
