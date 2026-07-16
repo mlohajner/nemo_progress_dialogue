@@ -38,10 +38,10 @@ This patch enhances it by adding a **real-time bandwidth graph**, making transfe
 
 ## Features
 
-- Real-time transfer and delete speed monitoring (KB/s, MB/s)
+- Real-time transfer and delete speed monitoring (MB/s, KB/s, B/s, files/sec)
 - Live bandwidth graph over time
 - Automatic graph scaling based on throughput
-- Works for copy and move operations
+- Works for copy, move and delete operations
 - Minimal performance overhead
 - Optional debug logging (if enabled)
 
