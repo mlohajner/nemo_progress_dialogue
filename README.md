@@ -7,6 +7,25 @@ It upgrades the default progress dialog with live throughput visualization, simi
 - Dolphin file manager (KDE)
 - Windows File Explorer
 
+## What this adds
+
+Instead of only showing *progress %,* users can now see **how fast the transfer is actually performing and how it changes over time**.
+
+Before:
+- Progress bar only
+- Estimated time remaining
+
+![Nemo Progress Dialog](1%29%20motivation%20%26%20screenshots/classic1.png)
+
+After:
+- Progress bar
+- Real-time speed indicator
+- Bandwidth history graph
+
+| Nemo Transfer Progress | Nemo Delete Progress |
+|:-:|:-:|
+| ![Nemo Transfer](1%29%20motivation%20%26%20screenshots/dialogue3.png) | ![Nemo Delete](1%29%20motivation%20%26%20screenshots/delete1.png) |
+
 ## Overview
 
 Nemo’s default file operation dialog shows only basic progress information:
@@ -19,7 +38,7 @@ This patch enhances it by adding a **real-time bandwidth graph**, making transfe
 
 ## Features
 
-- Real-time transfer speed monitoring (KB/s, MB/s)
+- Real-time transfer and delete speed monitoring (KB/s, MB/s)
 - Live bandwidth graph over time
 - Automatic graph scaling based on throughput
 - Works for copy and move operations
@@ -37,25 +56,6 @@ This patch improves visibility for:
 - Large backups and archives
 - External drives (USB, HDD, SSD)
 - Network transfers (SMB, NFS)
-
-Instead of only showing *progress %,* users can now see **how fast the transfer is actually performing and how it changes over time**.
-
-## What this adds
-
-Before:
-- Progress bar only
-- Estimated time remaining
-
-![Nemo Progress Dialog](1%29%20motivation%20%26%20screenshots/classic1.png)
-
-After:
-- Progress bar
-- Real-time speed indicator
-- Bandwidth history graph
-
-| Nemo Transfer Progress | Nemo Delete Progress |
-|:-:|:-:|
-| ![Nemo Transfer](1%29%20motivation%20%26%20screenshots/dialogue3.png) | ![Nemo Delete](1%29%20motivation%20%26%20screenshots/delete1.png) |
 
 ## Compatibility
 
