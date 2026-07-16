@@ -95,6 +95,22 @@ static void
 on_info_started (NemoProgressInfoWidget *self) {
 	NemoProgressInfoWidgetPriv *priv = self->priv;
 	priv->graph_ymax = 0;
+
+	priv->is_delete_mode = nemo_progress_info_get_delete_mode (priv->info);
+
+	GtkStyleContext *ctx = gtk_widget_get_style_context (priv->speed_graph);
+	GdkRGBA accent;
+	gtk_style_context_get_color (ctx, GTK_STATE_FLAG_LINK, &accent);
+
+	if (priv->is_delete_mode) {
+		priv->graph_color.red   = 1.0 - accent.red;
+		priv->graph_color.green = 1.0 - accent.green;
+		priv->graph_color.blue  = 1.0 - accent.blue;
+		priv->graph_color.alpha = 1.0;
+	} else {
+		priv->graph_color = accent;
+	}
+
 	gtk_widget_set_size_request(priv->speed_graph, -1, 80);
 	gtk_stack_set_visible_child_name (GTK_STACK (priv->stack), "running");
 }
@@ -111,7 +127,6 @@ on_graph_draw (GtkWidget *widget, cairo_t *cr, NemoProgressInfoWidget *self)
 	NemoProgressInfoWidgetPriv *priv = self->priv;
 	int w = gtk_widget_get_allocated_width (widget);
 	int h = gtk_widget_get_allocated_height (widget);
-
 	/* grid */
 	cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
 	cairo_set_source_rgba (cr, 0.8, 0.8, 0.8, 1);
@@ -123,16 +138,10 @@ on_graph_draw (GtkWidget *widget, cairo_t *cr, NemoProgressInfoWidget *self)
 	}
 	cairo_stroke (cr);
 	cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
-	
-	/* accent color from theme */
-	GtkStyleContext *ctx = gtk_widget_get_style_context (widget);
-	GdkRGBA accent;
-	gtk_style_context_get_color (ctx, GTK_STATE_FLAG_LINK, &accent);
 
 	/* create curve */
 	cairo_move_to (cr, 0 , h);
 	double prev_x = -1, prev_y = -1;
-
 	gdouble max_speed = 0;
 	for (int i = 0; i <= priv->graph_count; i++) {
 		if (priv->graph_data[i] > 0) {
@@ -146,7 +155,6 @@ on_graph_draw (GtkWidget *widget, cairo_t *cr, NemoProgressInfoWidget *self)
 			}
 			prev_x = x;
 			prev_y = y;
-
 			if (priv->graph_data[i] > max_speed)
 				max_speed = priv->graph_data[i];
 		}
@@ -154,25 +162,28 @@ on_graph_draw (GtkWidget *widget, cairo_t *cr, NemoProgressInfoWidget *self)
 	priv->graph_ymax=max_speed*1.2;
 
 	/* curve line */
-	cairo_set_source_rgba (cr, accent.red, accent.green, accent.blue, 1.0);
+	cairo_set_source_rgba (cr, priv->graph_color.red, priv->graph_color.green, priv->graph_color.blue, 1.0);
 	cairo_set_line_width (cr, 1.5);
 	cairo_stroke_preserve (cr);
 
 	/* fill under curve */
-	cairo_set_source_rgba (cr, accent.red, accent.green, accent.blue, 0.2);
+	cairo_set_source_rgba (cr, priv->graph_color.red, priv->graph_color.green, priv->graph_color.blue, 0.2);
 	cairo_line_to (cr, priv->graph_count * w / MAX_GRAPH_POINTS, h);
 	cairo_fill (cr);
 
 	/* graph max label */
 	char max_label[32];
-	if (max_speed > 1024 * 1024)
-		g_snprintf (max_label, sizeof (max_label), "%.1f MB/s", max_speed / (1000000));
-	else if (max_speed > 1024)
+	if (priv->is_delete_mode) {
+		g_snprintf (max_label, sizeof (max_label), "%.1f files/s", max_speed);
+	} else if (max_speed > 1024 * 1024) {
+		g_snprintf (max_label, sizeof (max_label), "%.1f MB/s", max_speed / 1000000);
+	} else if (max_speed > 1024) {
 		g_snprintf (max_label, sizeof (max_label), "%.1f kB/s", max_speed / 1000);
-	else
+	} else {
 		g_snprintf (max_label, sizeof (max_label), "%.0f B/s", max_speed);
+	}
 
-	cairo_set_source_rgba (cr, accent.red, accent.green, accent.blue, 1);
+	cairo_set_source_rgba (cr, priv->graph_color.red, priv->graph_color.green, priv->graph_color.blue, 1);
 	cairo_select_font_face (cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
 	cairo_set_font_size (cr, 12);
 	cairo_move_to (cr, 2, 10);
@@ -290,14 +301,31 @@ nemo_progress_info_widget_constructed (GObject *obj)
 	progress_bar = gtk_progress_bar_new ();
 	priv->progress_bar = progress_bar;
 	gtk_progress_bar_set_pulse_step (GTK_PROGRESS_BAR (progress_bar), 0.05);
-	
+
 	/* bandwith graph */
 	gboolean started = nemo_progress_info_get_is_started (self->priv->info);
+
+	priv->is_delete_mode = nemo_progress_info_get_delete_mode (self->priv->info);
+
+	GtkStyleContext *tmp_ctx = gtk_widget_get_style_context (GTK_WIDGET (self));
+	GdkRGBA accent;
+	gtk_style_context_get_color (tmp_ctx, GTK_STATE_FLAG_LINK, &accent);
+
+	if (priv->is_delete_mode) {
+		priv->graph_color.red   = 1.0 - accent.red;
+		priv->graph_color.green = 1.0 - accent.green;
+		priv->graph_color.blue  = 1.0 - accent.blue;
+		priv->graph_color.alpha = 1.0;
+	} else {
+		priv->graph_color = accent;
+	}
+
 	priv->speed_graph = gtk_drawing_area_new ();
 	if (started)
 		gtk_widget_set_size_request(priv->speed_graph, -1, 80);
 	else
 		gtk_widget_set_size_request(priv->speed_graph, -1, 0);
+
 	gtk_box_pack_start (GTK_BOX (vbox), priv->speed_graph, TRUE, FALSE, 2);
 	g_signal_connect (priv->speed_graph, "draw", G_CALLBACK (on_graph_draw), self);
 

@@ -75,6 +75,8 @@ struct _NemoProgressInfoWidgetPriv {
 	double graph_data[MAX_GRAPH_POINTS];
 	int graph_count;
 	double graph_ymax;
+	gboolean is_delete_mode;
+	GdkRGBA  graph_color;
 };
 
 GType nemo_progress_info_widget_get_type (void);
