@@ -54,6 +54,7 @@ After:
 - Bandwidth history graph
 
 ![Nemo Progress Dialog](1%29%20motivation%20%26%20screenshots/dialogue3.png)
+![Nemo Delete Dialog](1%29%20motivation%20%26%20screenshots/delete1.png)
 
 ## Compatibility
 
