@@ -1,4 +1,4 @@
-# Nemo Transfer Speed Graph Patch
+# Nemo Transfer Speed Graph
 
 A UI enhancement patch for **Nemo file manager** that adds a real-time **transfer speed / bandwidth graph** during file operations (copy, move, delete).
 
