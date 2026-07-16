@@ -188,6 +188,7 @@ typedef struct {
 	/* bandwith graph */
 	goffset last_speed_bytes;
 	gdouble last_speed_elapsed;
+	int last_speed_files;
 } TransferInfo;
 
 #define SECONDS_NEEDED_FOR_RELIABLE_TRANSFER_RATE 8
@@ -1061,6 +1062,12 @@ generate_initial_job_details (NemoProgressInfo *info,
     if (files != NULL)
         get_parent_name (files->data, &src_name);
 
+    /* bandwith graph */
+    nemo_progress_info_set_delete_mode (info,
+        kind == OP_KIND_DELETE ||
+        kind == OP_KIND_TRASH  ||
+        kind == OP_KIND_EMPTY_TRASH);
+
     switch (kind) {
         case OP_KIND_COPY:
             g_return_if_fail (files != NULL);
@@ -1713,6 +1720,19 @@ report_delete_progress (CommonJob *job,
 					    f (_("Deleting files")));
 
 	elapsed = g_timer_elapsed (job->time, NULL);
+
+	/* bandwith graph */
+	if (elapsed > 0) {
+		gdouble delta_files = transfer_info->num_files - transfer_info->last_speed_files;
+		gdouble delta_time  = elapsed - transfer_info->last_speed_elapsed;
+		if (delta_time > 0.3) {
+			gdouble instant_rate = delta_files / delta_time;
+			nemo_progress_info_set_speed (job->progress, instant_rate);
+			transfer_info->last_speed_files   = transfer_info->num_files;
+			transfer_info->last_speed_elapsed = elapsed;
+		}
+	}
+
 	if (elapsed < SECONDS_NEEDED_FOR_RELIABLE_TRANSFER_RATE) {
 
 		nemo_progress_info_set_details (job->progress, files_left_s);

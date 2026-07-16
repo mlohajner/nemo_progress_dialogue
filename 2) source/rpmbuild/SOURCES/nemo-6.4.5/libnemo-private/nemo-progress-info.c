@@ -46,9 +46,9 @@ static guint signals[LAST_SIGNAL] = { 0 };
 struct _NemoProgressInfo
 {
 	GObject parent_instance;
-	
+
 	GCancellable *cancellable;
-	
+
 	char *status;
 	char *details;
     char *initial_details;
@@ -58,17 +58,19 @@ struct _NemoProgressInfo
 	gboolean finished;
 	gboolean paused;
     gboolean queued;
-	
+
 	GSource *idle_source;
 	gboolean source_is_now;
-	
+
 	/* bandwith graph */
 	gdouble transfer_rate;
+	gboolean nemoDelete;
+
 	gboolean start_at_idle;
 	gboolean finish_at_idle;
 	gboolean changed_at_idle;
 	gboolean progress_at_idle;
-    gboolean queue_at_idle;
+	gboolean queue_at_idle;
 };
 
 struct _NemoProgressInfoClass
@@ -649,6 +651,7 @@ nemo_progress_info_set_progress (NemoProgressInfo *info,
 	G_UNLOCK (progress_info);
 }
 
+/* bandwith graph */
 void
 nemo_progress_info_set_speed (NemoProgressInfo *info,
                                gdouble           bytes_per_sec)
@@ -664,6 +667,25 @@ nemo_progress_info_get_speed (NemoProgressInfo *info)
     gdouble ret;
     G_LOCK(progress_info);
     ret = info->transfer_rate;
+    G_UNLOCK(progress_info);
+    return ret;
+}
+
+void
+nemo_progress_info_set_delete_mode (NemoProgressInfo *info,
+                                     gboolean          is_delete)
+{
+    G_LOCK(progress_info);
+    info->nemoDelete = is_delete;
+    G_UNLOCK(progress_info);
+}
+
+gboolean
+nemo_progress_info_get_delete_mode (NemoProgressInfo *info)
+{
+    gboolean ret;
+    G_LOCK(progress_info);
+    ret = info->nemoDelete;
     G_UNLOCK(progress_info);
     return ret;
 }
