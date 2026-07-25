@@ -1,13 +1,5 @@
 # Nemo Transfer Speed Graph
 
-A UI enhancement patch for **Nemo file manager** that adds a real-time **transfer speed / bandwidth graph** during file operations (copy, move, delete).
-
-It upgrades the default progress dialog with live throughput visualization, similar to:
-- Dolphin file manager (KDE)
-- Windows File Explorer
-
-## What this adds
-
 Instead of only showing *progress %,* users can now see **how fast the operation is actually performing and how it changes over time** — live, not averaged.
 
 Before:
@@ -28,6 +20,12 @@ After:
 
 ## Overview
 
+A UI enhancement patch for **Nemo file manager** that adds a real-time **transfer speed / bandwidth graph** during file operations (copy, move, delete).
+
+It upgrades the default progress dialog with live throughput visualization, similar to:
+- Dolphin file manager (KDE)
+- Windows File Explorer
+  
 Nemo's default file operation dialog shows only basic progress information:
 - Progress percentage
 - Estimated time remaining
