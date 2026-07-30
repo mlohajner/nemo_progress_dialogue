@@ -13,10 +13,11 @@ If there is sufficient interest, a future version of the patch may be developed 
 Until then, you can explore the relevant changes in the following source files:
 - src/nemo-progress-info-widget.c
 - src/nemo-progress-info-widget.h
-
 - libnemo-private/nemo-file-operations.c
 - libnemo-private/nemo-progress-info.c
 - libnemo-private/nemo-progress-info.h
+- libnemo-private/org.nemo.transfer-graph.gschema.xml
+- libnemo-private/meson.build
 
 ## Alternative
 
