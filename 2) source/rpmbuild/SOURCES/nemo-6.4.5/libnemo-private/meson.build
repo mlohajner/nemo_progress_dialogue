@@ -114,3 +114,7 @@ nemo_private = declare_dependency(
 install_data('org.nemo.gschema.xml',
     install_dir: join_paths(get_option('datadir'), 'glib-2.0', 'schemas')
 )
+
+install_data('org.nemo.transfer-graph.gschema.xml',
+    install_dir: join_paths(get_option('datadir'), 'glib-2.0', 'schemas')
+)
