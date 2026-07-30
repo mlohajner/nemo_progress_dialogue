@@ -16,8 +16,7 @@ After:
 
 | Nemo Transfer Progress | Nemo Delete Progress |
 |:-:|:-:|
-| ![Nemo Transfer](1%29%20motivation%20%26%20screenshots/more.png)
-
+| ![Nemo Transfer](1%29%20motivation%20%26%20screenshots/more.png) | |
 ![Nemo Transfer](1%29%20motivation%20%26%20screenshots/less.png) | ![Nemo Delete](1%29%20motivation%20%26%20screenshots/delete1.png) |
 
 ## Overview
