@@ -22,5 +22,6 @@ Until then, you can explore the relevant changes in the following source files:
 ## Alternative
 
 If you are a Fedora user with Nemo installed, you may consider using the provided prebuilt binary instead of compiling from source.
+NOTE: to use GSettings sheme / persistence compile and install: `org.nemo.transfer-graph.gschema.xml`
 
 [**Linux Mint fork here...**](https://github.com/cori77-hub/nemo_progress_dialogue)
