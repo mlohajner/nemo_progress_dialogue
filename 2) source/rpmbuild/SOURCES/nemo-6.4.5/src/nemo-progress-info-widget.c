@@ -43,6 +43,32 @@ static GParamSpec *properties[NUM_PROPERTIES] = { NULL };
 G_DEFINE_TYPE (NemoProgressInfoWidget, nemo_progress_info_widget,
                GTK_TYPE_BOX);
 
+static gboolean
+progress_widget_get_persisted_show_graph (void)
+{
+	GSettingsSchemaSource *source = g_settings_schema_source_get_default ();
+	GSettingsSchema *schema = g_settings_schema_source_lookup (source, "org.nemo.transfer-graph", TRUE);
+	gboolean value = FALSE;
+
+	if (schema != NULL) {
+		if (g_settings_schema_has_key (schema, "show-transfer-graph")) {
+			GSettings *settings = g_settings_new ("org.nemo.transfer-graph");
+			value = g_settings_get_boolean (settings, "show-transfer-graph");
+			g_object_unref (settings);
+		}
+		g_settings_schema_unref (schema);
+	}
+	return value;
+}
+
+static void
+progress_widget_set_persisted_show_graph (gboolean value)
+{
+	GSettings *settings = g_settings_new ("org.nemo.transfer-graph");
+	g_settings_set_boolean (settings, "show-transfer-graph", value);
+	g_object_unref (settings);
+}
+
 static void
 update_data (NemoProgressInfoWidget *self)
 {
@@ -92,6 +118,14 @@ update_progress (NemoProgressInfoWidget *self)
 }
 
 static void
+progress_widget_update_toggle_label (NemoProgressInfoWidget *self)
+{
+	NemoProgressInfoWidgetPriv *priv = self->priv;
+	gtk_button_set_label (GTK_BUTTON (priv->toggle_button),
+			      priv->show_graph ? _("Less ▲") : _("More ▼"));
+}
+
+static void
 on_info_started (NemoProgressInfoWidget *self) {
 	NemoProgressInfoWidgetPriv *priv = self->priv;
 	priv->graph_ymax = 0;
@@ -112,6 +146,7 @@ on_info_started (NemoProgressInfoWidget *self) {
 	}
 
 	gtk_widget_set_size_request(priv->speed_graph, -1, 80);
+	progress_widget_update_toggle_label (self);
 	gtk_stack_set_visible_child_name (GTK_STACK (priv->stack), "running");
 }
 
@@ -125,6 +160,8 @@ static gboolean
 on_graph_draw (GtkWidget *widget, cairo_t *cr, NemoProgressInfoWidget *self)
 {
 	NemoProgressInfoWidgetPriv *priv = self->priv;
+	if (!priv->show_graph) return FALSE;
+
 	int w = gtk_widget_get_allocated_width (widget);
 	int h = gtk_widget_get_allocated_height (widget);
 	/* grid */
@@ -163,11 +200,11 @@ on_graph_draw (GtkWidget *widget, cairo_t *cr, NemoProgressInfoWidget *self)
 
 	/* curve line */
 	cairo_set_source_rgba (cr, priv->graph_color.red, priv->graph_color.green, priv->graph_color.blue, 1.0);
-	cairo_set_line_width (cr, 1.5);
+	cairo_set_line_width (cr, 2);
 	cairo_stroke_preserve (cr);
 
 	/* fill under curve */
-	cairo_set_source_rgba (cr, priv->graph_color.red, priv->graph_color.green, priv->graph_color.blue, 0.2);
+	cairo_set_source_rgba (cr, priv->graph_color.red, priv->graph_color.green, priv->graph_color.blue, 0.5);
 	cairo_line_to (cr, priv->graph_count * w / MAX_GRAPH_POINTS, h);
 	cairo_fill (cr);
 
@@ -210,6 +247,19 @@ start_clicked (GtkWidget *button,
 {
 	NemoJobQueue *queue = nemo_job_queue_get ();
 	nemo_job_queue_start_job_by_info (queue, self->priv->info);
+}
+
+static void
+toggle_graph_clicked (GtkWidget *button, NemoProgressInfoWidget *self)
+{
+	NemoProgressInfoWidgetPriv *priv = self->priv;
+
+	priv->show_graph = !priv->show_graph;
+	progress_widget_set_persisted_show_graph (priv->show_graph);
+
+	gtk_widget_set_size_request (priv->speed_graph, -1, priv->show_graph ? 80 : 0);
+	gtk_widget_queue_draw (priv->speed_graph);
+	progress_widget_update_toggle_label (self);
 }
 
 static void
@@ -321,10 +371,13 @@ nemo_progress_info_widget_constructed (GObject *obj)
 	}
 
 	priv->speed_graph = gtk_drawing_area_new ();
-	if (started)
-		gtk_widget_set_size_request(priv->speed_graph, -1, 80);
-	else
-		gtk_widget_set_size_request(priv->speed_graph, -1, 0);
+	if (started) {
+		priv->show_graph = progress_widget_get_persisted_show_graph ();
+		gtk_widget_set_size_request (priv->speed_graph, -1, priv->show_graph ? 80 : 0);
+	} else {
+		priv->show_graph = FALSE;
+		gtk_widget_set_size_request (priv->speed_graph, -1, 0);
+	}
 
 	gtk_box_pack_start (GTK_BOX (vbox), priv->speed_graph, TRUE, FALSE, 2);
 	g_signal_connect (priv->speed_graph, "draw", G_CALLBACK (on_graph_draw), self);
@@ -338,6 +391,14 @@ nemo_progress_info_widget_constructed (GObject *obj)
 
 	gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 2);
 	priv->details = label;
+
+	priv->toggle_button = gtk_button_new ();
+	gtk_button_set_relief (GTK_BUTTON (priv->toggle_button), GTK_RELIEF_NONE);
+	gtk_widget_set_halign (priv->toggle_button, GTK_ALIGN_START);
+	progress_widget_update_toggle_label (self);
+	g_signal_connect (priv->toggle_button, "clicked", G_CALLBACK (toggle_graph_clicked), self);
+	gtk_box_pack_start (GTK_BOX (vbox), priv->toggle_button, FALSE, FALSE, 0);
+	gtk_widget_set_no_show_all (priv->toggle_button, TRUE);
 
 	bb = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_widget_set_halign (bb, GTK_ALIGN_START);
@@ -435,4 +496,10 @@ nemo_progress_info_widget_new (NemoProgressInfo *info)
 				 "homogeneous", FALSE,
 				 "spacing", 5,
 				 NULL);
+}
+
+void
+nemo_progress_info_widget_set_show_toggle (NemoProgressInfoWidget *self, gboolean visible)
+{
+	gtk_widget_set_visible (self->priv->toggle_button, visible);
 }

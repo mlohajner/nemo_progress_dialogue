@@ -157,6 +157,21 @@ ensure_first_separator_hidden (NemoProgressUIHandler *self)
 }
 
 static void
+progress_ui_handler_update_toggle_visibility (NemoProgressUIHandler *self)
+{
+    GList *l = gtk_container_get_children (GTK_CONTAINER (self->priv->list));
+    GList *iter;
+    gboolean first = TRUE;
+
+    for (iter = l; iter != NULL; iter = iter->next) {
+        nemo_progress_info_widget_set_show_toggle (NEMO_PROGRESS_INFO_WIDGET (iter->data), first);
+        first = FALSE;
+    }
+
+    g_list_free (l);
+}
+
+static void
 progress_ui_handler_sort_by_active (NemoProgressUIHandler *self)
 {
     gint first_pending = -1;
@@ -257,6 +272,7 @@ progress_ui_handler_add_to_window (NemoProgressUIHandler *self,
 
     ensure_first_separator_hidden (self);
     progress_ui_handler_sort_by_active (self);
+    progress_ui_handler_update_toggle_visibility (self);
 }
 
 static void
@@ -293,6 +309,7 @@ progress_info_finished_cb (NemoProgressInfo *info,
 		}
 
         ensure_first_separator_hidden (self);
+        progress_ui_handler_update_toggle_visibility (self);
 	} else {
 		if (gtk_widget_get_visible (self->priv->progress_window)) {
 			gtk_widget_hide (self->priv->progress_window);
@@ -338,6 +355,7 @@ progress_info_started_cb (NemoProgressUIHandler *self)
 {
     progress_ui_handler_sort_by_active (self);
     ensure_first_separator_hidden (self);
+    progress_ui_handler_update_toggle_visibility (self);
 }
 
 static void

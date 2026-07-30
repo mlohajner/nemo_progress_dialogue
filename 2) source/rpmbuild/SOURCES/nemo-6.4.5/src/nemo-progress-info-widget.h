@@ -68,6 +68,7 @@ struct _NemoProgressInfoWidgetPriv {
     GtkWidget *status; /* GtkLabel */
     GtkWidget *details; /* GtkLabel */
     GtkWidget *progress_bar;
+    GtkWidget *toggle_button;
     
 /* bandwith graph */
 	#define MAX_GRAPH_POINTS 200
@@ -76,11 +77,13 @@ struct _NemoProgressInfoWidgetPriv {
 	int graph_count;
 	double graph_ymax;
 	gboolean is_delete_mode;
+	gboolean show_graph;
 	GdkRGBA  graph_color;
 };
 
 GType nemo_progress_info_widget_get_type (void);
 
 GtkWidget * nemo_progress_info_widget_new (NemoProgressInfo *info);
+void nemo_progress_info_widget_set_show_toggle (NemoProgressInfoWidget *self, gboolean visible);
 
 #endif /* __NEMO_PROGRESS_INFO_WIDGET_H__ */
