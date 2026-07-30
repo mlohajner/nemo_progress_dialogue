@@ -13,6 +13,7 @@ After:
 - Real-time speed indicator
 - Bandwidth history graph
 - Delete operations get their own inverted accent color, so a long-running deletion is visually distinguishable from a transfer at a glance
+- More / Less option to show and gide transfer graph with GSettings sheme / persistance
 
 | Nemo Transfer Progress | Nemo Delete Progress |
 |:-:|:-:|
