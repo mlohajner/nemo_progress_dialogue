@@ -19,7 +19,7 @@ The proposed design adds a real-time bandwidth graph and transfer speed visualiz
 
 ## GSettings schema (for persistance and customisation)
 
-![dconf settings](GSettings%20schema-dconf.png.png)
+![dconf settings](GSettings%20schema-dconf.png)
 
 ## Design Goals
 
