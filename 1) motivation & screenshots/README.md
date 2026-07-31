@@ -19,7 +19,7 @@ The proposed design adds a real-time bandwidth graph and transfer speed visualiz
 
 ## GSettings schema (for persistance and customisation)
 
-![Proposed Nemo Dialog3](dialogue3.png)
+![dconf settings](GSettings%20schema-dconf.png.png)
 
 ## Design Goals
 
