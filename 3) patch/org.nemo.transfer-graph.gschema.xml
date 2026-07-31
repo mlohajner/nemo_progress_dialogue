@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.nemo.transfer-graph" path="/org/nemo/transfer-graph/" gettext-domain="nemo">
+    <key name="show-transfer-graph" type="b">
+      <default>false</default>
+      <summary>Show transfer speed graph</summary>
+      <description>Whether to show the bandwidth graph by default in file transfer progress dialogs. This is read once when a transfer starts and does not affect transfers already in progress.</description>
+    </key>
+  </schema>
+</schemalist>
