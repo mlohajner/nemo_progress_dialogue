@@ -13,8 +13,8 @@ After:
 - Real-time speed indicator
 - Bandwidth history graph
 - More / Less option to show and hide graph with GSettings scheme persistance (added in V3)
-- Enhanced customisation -extended GSettings scheme  
-  Transfer color (or auto), delete color (or auto), graph line thickness, and graph fill opacity.
+- Enhanced customisation (extended GSettings scheme)  
+  Transfer color, delete color, graph line thickness, and graph fill opacity.
 - Delete operations get their own inverted accent color -distinguishable from a transfer at a glance (added in V2)
 
 | Nemo Transfer Progress | Nemo Delete Progress |
