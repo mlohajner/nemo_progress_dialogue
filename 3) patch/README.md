@@ -23,7 +23,7 @@ Until then, you can explore the relevant changes in the following source files:
 
 If you are a Fedora user with Nemo installed, you may consider using the provided prebuilt binary instead of compiling from source.  
 **NOTE:  
-To use GSettings sheme -persistence of settings and additional custimisations, compile and install: `org.nemo.transfer-graph.gschema.xml`**
+To use GSettings sheme -persistence and additional custimisations, compile and install: `org.nemo.transfer-graph.gschema.xml`**
 ```
 sudo cp org.nemo.transfer-graph.gschema.xml /usr/share/glib-2.0/schemas/
 sudo glib-compile-schemas /usr/share/glib-2.0/schemas/
