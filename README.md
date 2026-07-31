@@ -12,9 +12,7 @@ After:
 - Progress bar
 - Real-time speed indicator
 - Bandwidth history graph
-- More / Less option to show and hide graph with GSettings scheme persistance
-- Enhanced customisation (extended GSettings scheme)  
-  Transfer color, delete color, graph line thickness, and graph fill opacity.
+
 - Delete operations get their own inverted accent color -distinguishable from a transfer at a glance
 
 | Nemo Transfer Progress | Nemo Delete Progress |
@@ -29,22 +27,20 @@ A UI enhancement patch for **Nemo file manager** that adds a real-time **transfe
 It upgrades the default progress dialog with live throughput visualization, similar to:
 - Dolphin file manager (KDE)
 - Windows File Explorer
-  
-Nemo's default file operation dialog shows only basic progress information:
-- Progress percentage
-- Estimated time remaining
-- File count
 
 This patch enhances it by adding a **real-time bandwidth graph**, making operation performance visible over time.
 
 ## Features
 
 - Real-time transfer and delete speed monitoring (MB/s, KB/s, B/s, files/s)
-- Instantaneous rate calculation (not a running average), so the graph reacts immediately to speed changes — useful on inconsistent transfers (USB, network shares)
 - Live bandwidth graph over time
+  Actual transfer rate - the graph reacts immediately to speed changes (USB, network shares)
 - Automatic graph scaling based on throughput
-- Delete operations use an inverted accent color, giving an instant visual cue that the operation is destructive
+- Delete operations use distinct or inverted accent color, giving an instant visual cue that the operation is destructive
 - Works for copy, move and delete operations
+- More / Less option to show and hide graph with GSettings scheme persistance
+- Extended GSettings scheme for persistance and customisation
+  Transfer color, delete color, graph line thickness, and graph fill opacity.
 - Minimal performance overhead
 
 ---
