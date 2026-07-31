@@ -122,7 +122,7 @@ progress_widget_update_toggle_label (NemoProgressInfoWidget *self)
 {
 	NemoProgressInfoWidgetPriv *priv = self->priv;
 	gtk_button_set_label (GTK_BUTTON (priv->toggle_button),
-			      priv->show_graph ? _("Less ▲") : _("More ▼"));
+			      priv->show_graph ? _("▲ Less") : _("▼ More"));
 }
 
 static void
