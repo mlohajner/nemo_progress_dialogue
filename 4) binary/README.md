@@ -5,6 +5,12 @@ This directory contains prebuilt binary of Nemo with the bandwidth graph patch a
 No installation needed, backup your current /usr/bin/nemo and replace with provided executable
 
 These binaries are provided for *Fedora users* who prefer not to compile the source code manually.
+**NOTE:  
+To use GSettings sheme -persistence of settings and additional custimisations, compile and install: `org.nemo.transfer-graph.gschema.xml`**
+```
+sudo cp org.nemo.transfer-graph.gschema.xml /usr/share/glib-2.0/schemas/
+sudo glib-compile-schemas /usr/share/glib-2.0/schemas/
+```
 
 They are intended for convenience and quick testing of the feature.
 
