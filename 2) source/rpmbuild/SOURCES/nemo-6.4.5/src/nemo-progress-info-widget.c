@@ -37,6 +37,8 @@ enum {
 
 #define START_ICON "media-playback-start-symbolic"
 #define STOP_ICON "media-playback-stop-symbolic"
+#define DEFAULT_GRAPH_LINE_WIDTH   2
+#define DEFAULT_GRAPH_FILL_OPACITY 0.5
 
 static GParamSpec *properties[NUM_PROPERTIES] = { NULL };
 
@@ -59,6 +61,99 @@ progress_widget_get_persisted_show_graph (void)
 		g_settings_schema_unref (schema);
 	}
 	return value;
+}
+
+/* Cached GSettings instance for org.nemo.transfer-graph, or NULL if the
+ * schema is not installed on this system. */
+static GSettings *
+get_transfer_graph_settings (void)
+{
+	static GSettings *settings = NULL;
+	static gboolean checked = FALSE;
+
+	if (!checked) {
+		checked = TRUE;
+
+		GSettingsSchemaSource *source = g_settings_schema_source_get_default ();
+		GSettingsSchema *schema = g_settings_schema_source_lookup (source, "org.nemo.transfer-graph", TRUE);
+
+		if (schema != NULL) {
+			settings = g_settings_new ("org.nemo.transfer-graph");
+			g_settings_schema_unref (schema);
+		}
+		/* schema == NULL -> settings stays NULL, callers fall back to defaults */
+	}
+
+	return settings;
+}
+
+/* Resolves the graph color for the given mode (transfer vs delete).
+ *
+ * - If the schema is not installed          -> theme color ("auto" behavior)
+ * - If the key is "auto" or fails to parse  -> theme color
+ * - Otherwise                                -> parsed custom color
+ */
+static void
+progress_widget_get_graph_color (NemoProgressInfoWidget *self,
+				  gboolean is_delete_mode,
+				  GdkRGBA *out_color)
+{
+	GtkStyleContext *ctx = gtk_widget_get_style_context (GTK_WIDGET (self));
+	GdkRGBA accent;
+	gtk_style_context_get_color (ctx, GTK_STATE_FLAG_LINK, &accent);
+
+	GdkRGBA theme_color;
+	if (is_delete_mode) {
+		theme_color.red   = 1.0 - accent.red;
+		theme_color.green = 1.0 - accent.green;
+		theme_color.blue  = 1.0 - accent.blue;
+		theme_color.alpha = 1.0;
+	} else {
+		theme_color = accent;
+	}
+
+	GSettings *settings = get_transfer_graph_settings ();
+
+	if (settings == NULL) {
+		/* schema not installed -> behave as "auto" */
+		*out_color = theme_color;
+		return;
+	}
+
+	const gchar *key = is_delete_mode ? "delete-graph-color" : "transfer-graph-color";
+	gchar *value = g_settings_get_string (settings, key);
+
+	if (value != NULL && g_strcmp0 (value, "auto") != 0 && gdk_rgba_parse (out_color, value)) {
+		/* custom color successfully parsed into out_color */
+	} else {
+		*out_color = theme_color;
+	}
+
+	g_free (value);
+}
+
+static gint
+progress_widget_get_graph_line_width (void)
+{
+	GSettings *settings = get_transfer_graph_settings ();
+
+	if (settings == NULL) {
+		return DEFAULT_GRAPH_LINE_WIDTH;
+	}
+
+	return g_settings_get_int (settings, "graph-line");
+}
+
+static gdouble
+progress_widget_get_graph_fill_opacity (void)
+{
+	GSettings *settings = get_transfer_graph_settings ();
+
+	if (settings == NULL) {
+		return DEFAULT_GRAPH_FILL_OPACITY;
+	}
+
+	return g_settings_get_double (settings, "graph-fill-opacity");
 }
 
 static void
@@ -132,18 +227,9 @@ on_info_started (NemoProgressInfoWidget *self) {
 
 	priv->is_delete_mode = nemo_progress_info_get_delete_mode (priv->info);
 
-	GtkStyleContext *ctx = gtk_widget_get_style_context (priv->speed_graph);
-	GdkRGBA accent;
-	gtk_style_context_get_color (ctx, GTK_STATE_FLAG_LINK, &accent);
-
-	if (priv->is_delete_mode) {
-		priv->graph_color.red   = 1.0 - accent.red;
-		priv->graph_color.green = 1.0 - accent.green;
-		priv->graph_color.blue  = 1.0 - accent.blue;
-		priv->graph_color.alpha = 1.0;
-	} else {
-		priv->graph_color = accent;
-	}
+	progress_widget_get_graph_color (self, priv->is_delete_mode, &priv->graph_color);
+	priv->graph_line_width   = progress_widget_get_graph_line_width ();
+	priv->graph_fill_opacity = progress_widget_get_graph_fill_opacity ();
 
 	gtk_widget_set_size_request(priv->speed_graph, -1, 80);
 	progress_widget_update_toggle_label (self);
@@ -200,11 +286,12 @@ on_graph_draw (GtkWidget *widget, cairo_t *cr, NemoProgressInfoWidget *self)
 
 	/* curve line */
 	cairo_set_source_rgba (cr, priv->graph_color.red, priv->graph_color.green, priv->graph_color.blue, 1.0);
-	cairo_set_line_width (cr, 2);
+	cairo_set_line_width (cr, priv->graph_line_width);
 	cairo_stroke_preserve (cr);
 
 	/* fill under curve */
-	cairo_set_source_rgba (cr, priv->graph_color.red, priv->graph_color.green, priv->graph_color.blue, 0.5);
+	cairo_set_source_rgba (cr, priv->graph_color.red, priv->graph_color.green, priv->graph_color.blue,
+				priv->graph_fill_opacity);
 	cairo_line_to (cr, priv->graph_count * w / MAX_GRAPH_POINTS, h);
 	cairo_fill (cr);
 
@@ -356,19 +443,9 @@ nemo_progress_info_widget_constructed (GObject *obj)
 	gboolean started = nemo_progress_info_get_is_started (self->priv->info);
 
 	priv->is_delete_mode = nemo_progress_info_get_delete_mode (self->priv->info);
-
-	GtkStyleContext *tmp_ctx = gtk_widget_get_style_context (GTK_WIDGET (self));
-	GdkRGBA accent;
-	gtk_style_context_get_color (tmp_ctx, GTK_STATE_FLAG_LINK, &accent);
-
-	if (priv->is_delete_mode) {
-		priv->graph_color.red   = 1.0 - accent.red;
-		priv->graph_color.green = 1.0 - accent.green;
-		priv->graph_color.blue  = 1.0 - accent.blue;
-		priv->graph_color.alpha = 1.0;
-	} else {
-		priv->graph_color = accent;
-	}
+	progress_widget_get_graph_color (self, priv->is_delete_mode, &priv->graph_color);
+	priv->graph_line_width   = progress_widget_get_graph_line_width ();
+	priv->graph_fill_opacity = progress_widget_get_graph_fill_opacity ();
 
 	priv->speed_graph = gtk_drawing_area_new ();
 	if (started) {

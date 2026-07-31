@@ -79,6 +79,8 @@ struct _NemoProgressInfoWidgetPriv {
 	gboolean is_delete_mode;
 	gboolean show_graph;
 	GdkRGBA  graph_color;
+	gint    graph_line_width;
+	gdouble graph_fill_opacity;
 };
 
 GType nemo_progress_info_widget_get_type (void);
