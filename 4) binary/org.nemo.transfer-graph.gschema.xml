@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.nemo.transfer-graph" path="/org/nemo/transfer-graph/" gettext-domain="nemo">
+    <key name="show-transfer-graph" type="b">
+      <default>false</default>
+      <summary>Show transfer speed graph</summary>
+      <description>Show the bandwidth graph by default in file transfer progress dialogs.</description>
+    </key>
+
+    <!-- transfer color -->
+    <key name="transfer-graph-color" type="s">
+      <default>'auto'</default>
+      <summary>Transfer graph color</summary>
+      <description>Custom color, 'auto' or #RRGGBB format.</description>
+    </key>
+
+    <!-- delete color -->
+    <key name="delete-graph-color" type="s">
+      <default>'auto'</default>
+      <summary>Delete graph color</summary>
+      <description>Custom color, 'auto' or #RRGGBB format.</description>
+    </key>
+
+    <!-- graph line thickness -->
+    <key name="graph-line" type="i">
+      <range min="1" max="10"/>
+      <default>2</default>
+      <summary>Graph line width</summary>
+      <description>Thickness, in pixels, of the graph line.</description>
+    </key>
+
+    <!-- graph fill opacity -->
+    <key name="graph-fill-opacity" type="d">
+      <range min="0.0" max="1.0"/>
+      <default>0.5</default>
+      <summary>Graph fill opacity</summary>
+      <description>Opacity, from 0.0 to 1.0, of the area filled below the graph line.</description>
+    </key>
+  </schema>
+</schemalist>
