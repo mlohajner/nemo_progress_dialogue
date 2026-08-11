@@ -1,4 +1,4 @@
-# Nemo Transfer Speed Graph V3
+# Nemo Transfer Speed Graph V4
 
 Instead of only showing *progress %,* users can now see **how fast the operation is actually performing and how it changes over time** — live, not averaged.
 
