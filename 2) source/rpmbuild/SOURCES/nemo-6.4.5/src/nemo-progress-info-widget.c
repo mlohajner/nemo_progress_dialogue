@@ -216,8 +216,10 @@ static void
 progress_widget_update_toggle_label (NemoProgressInfoWidget *self)
 {
 	NemoProgressInfoWidgetPriv *priv = self->priv;
-	gtk_button_set_label (GTK_BUTTON (priv->toggle_button),
-			      priv->show_graph ? _("▲ Less") : _("▼ More"));
+	GtkWidget *label = gtk_bin_get_child (GTK_BIN (priv->toggle_button));
+
+	gtk_label_set_text (GTK_LABEL (label),
+			     priv->show_graph ? _("▴ Less") : _("▾ More"));
 }
 
 static void
@@ -336,17 +338,17 @@ start_clicked (GtkWidget *button,
 	nemo_job_queue_start_job_by_info (queue, self->priv->info);
 }
 
-static void
-toggle_graph_clicked (GtkWidget *button, NemoProgressInfoWidget *self)
+static gboolean
+toggle_graph_clicked (GtkWidget *button, GdkEventButton *event, NemoProgressInfoWidget *self)
 {
 	NemoProgressInfoWidgetPriv *priv = self->priv;
-
 	priv->show_graph = !priv->show_graph;
 	progress_widget_set_persisted_show_graph (priv->show_graph);
-
 	gtk_widget_set_size_request (priv->speed_graph, -1, priv->show_graph ? 80 : 0);
 	gtk_widget_queue_draw (priv->speed_graph);
 	progress_widget_update_toggle_label (self);
+
+	return GDK_EVENT_STOP;
 }
 
 static void
@@ -469,11 +471,16 @@ nemo_progress_info_widget_constructed (GObject *obj)
 	gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 2);
 	priv->details = label;
 
-	priv->toggle_button = gtk_button_new ();
-	gtk_button_set_relief (GTK_BUTTON (priv->toggle_button), GTK_RELIEF_NONE);
+	priv->toggle_button = gtk_event_box_new ();
+	gtk_event_box_set_visible_window (GTK_EVENT_BOX (priv->toggle_button), FALSE);
 	gtk_widget_set_halign (priv->toggle_button, GTK_ALIGN_START);
+	label = gtk_label_new (NULL);
+	gtk_widget_set_halign (label, GTK_ALIGN_START);
+	gtk_container_add (GTK_CONTAINER (priv->toggle_button), label);
+	gtk_widget_show (label);
 	progress_widget_update_toggle_label (self);
-	g_signal_connect (priv->toggle_button, "clicked", G_CALLBACK (toggle_graph_clicked), self);
+	g_signal_connect (priv->toggle_button, "button-press-event",
+								G_CALLBACK (toggle_graph_clicked), self);
 	gtk_box_pack_start (GTK_BOX (vbox), priv->toggle_button, FALSE, FALSE, 0);
 	gtk_widget_set_no_show_all (priv->toggle_button, TRUE);
 
