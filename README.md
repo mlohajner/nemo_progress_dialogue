@@ -1,4 +1,4 @@
-# Nemo Transfer Speed Graph V4
+<h1> <img src="nemo.png" width="40" valign="middle" alt="Nemo icon"> Nemo Transfer Speed Graph V4 </h1>
 
 Instead of only showing *progress %,* users can now see **how fast the operation is actually performing and how it changes over time** — live, not averaged.
 
