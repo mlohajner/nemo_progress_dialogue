@@ -23,7 +23,7 @@ diff -ruN a/libnemo-private/nemo-file-operations.c b/libnemo-private/nemo-file-o
  } TransferInfo;
  
  #define SECONDS_NEEDED_FOR_RELIABLE_TRANSFER_RATE 8
-@@ -1058,6 +1062,12 @@
+@@ -1058,6 +1066,12 @@
      if (files != NULL)
          get_parent_name (files->data, &src_name);
  
@@ -36,7 +36,7 @@ diff -ruN a/libnemo-private/nemo-file-operations.c b/libnemo-private/nemo-file-o
      switch (kind) {
          case OP_KIND_COPY:
              g_return_if_fail (files != NULL);
-@@ -1710,12 +1720,27 @@
+@@ -1710,12 +1730,27 @@
  					    f (_("Deleting files")));
  
  	elapsed = g_timer_elapsed (job->time, NULL);
@@ -64,7 +64,7 @@ diff -ruN a/libnemo-private/nemo-file-operations.c b/libnemo-private/nemo-file-o
  		remaining_time = files_left / transfer_rate;
  
  		/* To translators: %T will expand to a time like "2 minutes".
-@@ -3331,7 +3356,18 @@
+@@ -3331,7 +3381,18 @@
  
  	elapsed = g_timer_elapsed (job->time, NULL);
  	transfer_rate = 0;
@@ -121,7 +121,7 @@ diff -ruN a/libnemo-private/nemo-progress-info.c b/libnemo-private/nemo-progress
  };
  
  struct _NemoProgressInfoClass
-@@ -646,3 +650,42 @@
+@@ -646,3 +654,42 @@
  	
  	G_UNLOCK (progress_info);
  }
@@ -363,7 +363,7 @@ diff -ruN a/src/nemo-progress-info-widget.c b/src/nemo-progress-info-widget.c
  static void
  update_data (NemoProgressInfoWidget *self)
  {
-@@ -63,25 +184,138 @@
+@@ -63,25 +305,141 @@
  static void
  update_progress (NemoProgressInfoWidget *self)
  {
@@ -407,6 +407,8 @@ diff -ruN a/src/nemo-progress-info-widget.c b/src/nemo-progress-info-widget.c
 +
 +	gtk_label_set_text (GTK_LABEL (label),
 +			     priv->show_graph ? _("▴ Less") : _("▾ More"));
++	gtk_widget_set_size_request (priv->speed_graph,-1,
++									priv->show_graph ? 80 : 0);
 +}
 +
 +static void
@@ -421,8 +423,9 @@ diff -ruN a/src/nemo-progress-info-widget.c b/src/nemo-progress-info-widget.c
 +	priv->graph_line_width   = progress_widget_get_graph_line_width ();
 +	priv->graph_fill_opacity = progress_widget_get_graph_fill_opacity ();
 +
-+	gtk_widget_set_size_request(priv->speed_graph, -1, 80);
++	priv->show_graph = progress_widget_get_persisted_show_graph ();
 +	progress_widget_update_toggle_label (self);
++	
 +	gtk_stack_set_visible_child_name (GTK_STACK (priv->stack), "running");
  }
  
@@ -508,7 +511,7 @@ diff -ruN a/src/nemo-progress-info-widget.c b/src/nemo-progress-info-widget.c
  }
  
  static void
-@@ -90,18 +324,31 @@
+@@ -90,18 +561,30 @@
  {
  	nemo_progress_info_cancel (self->priv->info);
  
@@ -537,7 +540,6 @@ diff -ruN a/src/nemo-progress-info-widget.c b/src/nemo-progress-info-widget.c
 +	NemoProgressInfoWidgetPriv *priv = self->priv;
 +	priv->show_graph = !priv->show_graph;
 +	progress_widget_set_persisted_show_graph (priv->show_graph);
-+	gtk_widget_set_size_request (priv->speed_graph, -1, priv->show_graph ? 80 : 0);
 +	gtk_widget_queue_draw (priv->speed_graph);
 +	progress_widget_update_toggle_label (self);
 +
@@ -545,7 +547,7 @@ diff -ruN a/src/nemo-progress-info-widget.c b/src/nemo-progress-info-widget.c
  }
  
  static void
-@@ -109,128 +356,161 @@
+@@ -109,128 +605,159 @@
  {
  	GtkWidget *label, *progress_bar, *hbox, *vbox, *button, *view, *bb, *main_box;
  	NemoProgressInfoWidget *self = NEMO_PROGRESS_INFO_WIDGET (obj);
@@ -699,10 +701,8 @@ diff -ruN a/src/nemo-progress-info-widget.c b/src/nemo-progress-info-widget.c
 +	priv->speed_graph = gtk_drawing_area_new ();
 +	if (started) {
 +		priv->show_graph = progress_widget_get_persisted_show_graph ();
-+		gtk_widget_set_size_request (priv->speed_graph, -1, priv->show_graph ? 80 : 0);
 +	} else {
 +		priv->show_graph = FALSE;
-+		gtk_widget_set_size_request (priv->speed_graph, -1, 0);
 +	}
 +
 +	gtk_box_pack_start (GTK_BOX (vbox), priv->speed_graph, TRUE, FALSE, 2);
@@ -788,7 +788,7 @@ diff -ruN a/src/nemo-progress-info-widget.c b/src/nemo-progress-info-widget.c
  }
  
  static void
-@@ -245,9 +525,9 @@
+@@ -245,9 +805,9 @@
  
  static void
  nemo_progress_info_widget_set_property (GObject *object,
@@ -801,7 +801,7 @@ diff -ruN a/src/nemo-progress-info-widget.c b/src/nemo-progress-info-widget.c
  {
  	NemoProgressInfoWidget *self = NEMO_PROGRESS_INFO_WIDGET (object);
  
-@@ -266,8 +546,6 @@
+@@ -266,8 +826,6 @@
  {
  	self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, NEMO_TYPE_PROGRESS_INFO_WIDGET,
  						  NemoProgressInfoWidgetPriv);
@@ -810,7 +810,7 @@ diff -ruN a/src/nemo-progress-info-widget.c b/src/nemo-progress-info-widget.c
  }
  
  static void
-@@ -282,11 +560,11 @@
+@@ -282,11 +838,11 @@
  
  	properties[PROP_INFO] =
  		g_param_spec_object ("info",
@@ -827,7 +827,7 @@ diff -ruN a/src/nemo-progress-info-widget.c b/src/nemo-progress-info-widget.c
  
  	g_object_class_install_properties (oclass, NUM_PROPERTIES, properties);
  
-@@ -297,9 +575,15 @@
+@@ -297,9 +853,15 @@
  nemo_progress_info_widget_new (NemoProgressInfo *info)
  {
  	return g_object_new (NEMO_TYPE_PROGRESS_INFO_WIDGET,
@@ -908,7 +908,7 @@ diff -ruN a/src/nemo-progress-ui-handler.c b/src/nemo-progress-ui-handler.c
  progress_ui_handler_sort_by_active (NemoProgressUIHandler *self)
  {
      gint first_pending = -1;
-@@ -257,6 +272,7 @@
+@@ -257,6 +287,7 @@
  
      ensure_first_separator_hidden (self);
      progress_ui_handler_sort_by_active (self);
@@ -916,7 +916,7 @@ diff -ruN a/src/nemo-progress-ui-handler.c b/src/nemo-progress-ui-handler.c
  }
  
  static void
-@@ -293,6 +309,7 @@
+@@ -293,6 +325,7 @@
  		}
  
          ensure_first_separator_hidden (self);
@@ -924,7 +924,7 @@ diff -ruN a/src/nemo-progress-ui-handler.c b/src/nemo-progress-ui-handler.c
  	} else {
  		if (gtk_widget_get_visible (self->priv->progress_window)) {
  			gtk_widget_hide (self->priv->progress_window);
-@@ -338,6 +355,7 @@
+@@ -338,6 +372,7 @@
  {
      progress_ui_handler_sort_by_active (self);
      ensure_first_separator_hidden (self);
