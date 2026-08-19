@@ -13,7 +13,7 @@ Enhanced Nemo Progress Dialog:
   - transfer-graph-color
   - graph-fill-opacity
   - graph-line width
-  - show-transfer-graph
+  - show-transfer-graph (Show/Hide persistency)
 
 | Nemo Transfer Progress | Nemo Delete Progress |
 |:-:|:-:|
