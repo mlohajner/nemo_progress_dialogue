@@ -6,8 +6,14 @@ Enhanced Nemo Progress Dialog:
 - Progress bar
 - Real-time speed indicator
 - Bandwidth history graph
-
 - Delete operations get their own inverted accent color -distinguishable from a transfer at a glance
+- More / Less (show or hide graph)
+- dedicated GSettings schema /org/nemo/transfer-graph for:
+  - delete-graph-color
+  - transfer-graph-color
+  - graph-fill-opacity
+  - graph-line width
+  - show-transfer-graph
 
 | Nemo Transfer Progress | Nemo Delete Progress |
 |:-:|:-:|
