@@ -1,0 +1,576 @@
+diff -ruN a/libnemo-private/meson.build b/libnemo-private/meson.build
+--- a/libnemo-private/meson.build	2026-01-08 13:29:19.000000000 +0000
++++ b/libnemo-private/meson.build	2026-08-19 21:56:50.868303603 +0000
+@@ -114,3 +114,7 @@
+ install_data('org.nemo.gschema.xml',
+     install_dir: join_paths(get_option('datadir'), 'glib-2.0', 'schemas')
+ )
++
++install_data('org.nemo.transfer-graph.gschema.xml',
++    install_dir: join_paths(get_option('datadir'), 'glib-2.0', 'schemas')
++)
+diff -ruN a/libnemo-private/nemo-file-operations.c b/libnemo-private/nemo-file-operations.c
+--- a/libnemo-private/nemo-file-operations.c	2026-01-08 13:29:19.000000000 +0000
++++ b/libnemo-private/nemo-file-operations.c	2026-08-19 21:57:24.209912792 +0000
+@@ -184,6 +184,10 @@
+ 	OpKind op;
+ 	guint64 last_report_time;
+ 	int last_reported_files_left;
++	/* bandwith graph */
++	goffset last_speed_bytes;
++	gdouble last_speed_elapsed;
++	int last_speed_files;
+ } TransferInfo;
+ 
+ #define SECONDS_NEEDED_FOR_RELIABLE_TRANSFER_RATE 8
+@@ -1057,6 +1061,12 @@
+     if (files != NULL)
+         get_parent_name (files->data, &src_name);
+ 
++    /* bandwith graph */
++    nemo_progress_info_set_delete_mode (info,
++        kind == OP_KIND_DELETE ||
++        kind == OP_KIND_TRASH  ||
++        kind == OP_KIND_EMPTY_TRASH);
++
+     switch (kind) {
+         case OP_KIND_COPY:
+             g_return_if_fail (files != NULL);
+@@ -1705,6 +1715,19 @@
+ 					    f (_("Deleting files")));
+ 
+ 	elapsed = nemo_progress_info_get_elapsed_time (job->progress);
++
++	/* bandwidth graph */
++	if (elapsed > 0) {
++		gdouble delta_files = transfer_info->num_files - transfer_info->last_speed_files;
++		gdouble delta_time  = elapsed - transfer_info->last_speed_elapsed;
++		if (delta_time > 0.3) {
++			gdouble instant_rate = delta_files / delta_time;
++			nemo_progress_info_set_speed (job->progress, instant_rate);
++			transfer_info->last_speed_files   = transfer_info->num_files;
++			transfer_info->last_speed_elapsed = elapsed;
++		}
++	}
++
+ 	if (elapsed < SECONDS_NEEDED_FOR_RELIABLE_TRANSFER_RATE) {
+         if (nemo_progress_info_get_is_paused (job->progress)) {
+             nemo_progress_info_set_details (job->progress, _("Paused"));
+@@ -1718,6 +1741,8 @@
+             time_left_s = g_strdup (_("Paused"));
+         } else {
+             transfer_rate = transfer_info->num_files / elapsed;
++            /* bandwidth graph */
++            nemo_progress_info_set_speed (job->progress, transfer_rate);
+             remaining_time = files_left / transfer_rate;
+ 
+             /* To translators: %T will expand to a time like "2 minutes".
+@@ -3340,7 +3365,18 @@
+ 
+ 	elapsed = nemo_progress_info_get_elapsed_time (job->progress);
+ 	transfer_rate = 0;
++	/* bandwith graph */
++	nemo_progress_info_set_speed (job->progress, transfer_rate);
+ 	if (elapsed > 0) {
++		/* bandwidth graph */
++		gdouble delta_bytes = transfer_info->num_bytes - transfer_info->last_speed_bytes;
++		gdouble delta_time  = elapsed - transfer_info->last_speed_elapsed;
++		if(delta_time>0.3) {
++			gdouble instant_rate = delta_bytes / delta_time;
++			nemo_progress_info_set_speed (job->progress, instant_rate);
++			transfer_info->last_speed_bytes   = transfer_info->num_bytes;
++			transfer_info->last_speed_elapsed = elapsed;
++		}
+ 		transfer_rate = transfer_info->num_bytes / elapsed;
+ 	}
+ 
+diff -ruN a/libnemo-private/nemo-progress-info.c b/libnemo-private/nemo-progress-info.c
+--- a/libnemo-private/nemo-progress-info.c	2026-01-08 13:29:19.000000000 +0000
++++ b/libnemo-private/nemo-progress-info.c	2026-08-19 21:57:24.209163551 +0000
+@@ -61,15 +61,20 @@
+ 	gboolean finished;
+ 	gboolean paused;
+     gboolean queued;
+-	
++
+ 	GSource *idle_source;
+ 	gboolean source_is_now;
+-	
++
++	/* bandwith graph */
++	gdouble transfer_rate;
++	gboolean nemoDelete;
++
+ 	gboolean start_at_idle;
+ 	gboolean finish_at_idle;
+ 	gboolean changed_at_idle;
+ 	gboolean progress_at_idle;
+-    gboolean queue_at_idle;
++	gboolean queue_at_idle;
++
+ };
+ 
+ struct _NemoProgressInfoClass
+@@ -683,4 +688,43 @@
+     g_mutex_unlock (&info->info_lock);
+ 
+     return elapsed;
+-}
+\ No newline at end of file
++}
++
++/* bandwidth graph */
++void
++nemo_progress_info_set_speed (NemoProgressInfo *info,
++                               gdouble           bytes_per_sec)
++{
++    g_mutex_lock (&info->info_lock);
++    info->transfer_rate = bytes_per_sec;
++    g_mutex_unlock (&info->info_lock);
++}
++
++gdouble
++nemo_progress_info_get_speed (NemoProgressInfo *info)
++{
++    gdouble ret;
++    g_mutex_lock (&info->info_lock);
++    ret = info->transfer_rate;
++    g_mutex_unlock (&info->info_lock);
++    return ret;
++}
++
++void
++nemo_progress_info_set_delete_mode (NemoProgressInfo *info,
++                                     gboolean          is_delete)
++{
++    g_mutex_lock (&info->info_lock);
++    info->nemoDelete = is_delete;
++    g_mutex_unlock (&info->info_lock);
++}
++
++gboolean
++nemo_progress_info_get_delete_mode (NemoProgressInfo *info)
++{
++    gboolean ret;
++    g_mutex_lock (&info->info_lock);
++    ret = info->nemoDelete;
++    g_mutex_unlock (&info->info_lock);
++    return ret;
++}
+diff -ruN a/libnemo-private/nemo-progress-info.h b/libnemo-private/nemo-progress-info.h
+--- a/libnemo-private/nemo-progress-info.h	2026-01-08 13:29:19.000000000 +0000
++++ b/libnemo-private/nemo-progress-info.h	2026-08-19 21:57:05.606517977 +0000
+@@ -86,5 +86,13 @@
+ 
+ gdouble       nemo_progress_info_get_elapsed_time (NemoProgressInfo *info);
+ 
++/* bandwidth graph */
++void          nemo_progress_info_set_speed        (NemoProgressInfo *info,
++                                                   gdouble           bytes_per_sec);
++gdouble       nemo_progress_info_get_speed        (NemoProgressInfo *info);
++void          nemo_progress_info_set_delete_mode  (NemoProgressInfo *info,
++                                                   gboolean          is_delete);
++gboolean      nemo_progress_info_get_delete_mode  (NemoProgressInfo *info);
++
+ 
+ #endif /* NEMO_PROGRESS_INFO_H */
+diff -ruN a/libnemo-private/org.nemo.transfer-graph.gschema.xml b/libnemo-private/org.nemo.transfer-graph.gschema.xml
+--- a/libnemo-private/org.nemo.transfer-graph.gschema.xml	1970-01-01 00:00:00.000000000 +0000
++++ b/libnemo-private/org.nemo.transfer-graph.gschema.xml	2026-08-19 21:56:50.869729947 +0000
+@@ -0,0 +1,40 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<schemalist>
++  <schema id="org.nemo.transfer-graph" path="/org/nemo/transfer-graph/" gettext-domain="nemo">
++    <key name="show-transfer-graph" type="b">
++      <default>false</default>
++      <summary>Show transfer speed graph</summary>
++      <description>Show the bandwidth graph by default in file transfer progress dialogs.</description>
++    </key>
++
++    <!-- transfer color -->
++    <key name="transfer-graph-color" type="s">
++      <default>'auto'</default>
++      <summary>Transfer graph color</summary>
++      <description>Custom color, 'auto' or #RRGGBB format.</description>
++    </key>
++
++    <!-- delete color -->
++    <key name="delete-graph-color" type="s">
++      <default>'auto'</default>
++      <summary>Delete graph color</summary>
++      <description>Custom color, 'auto' or #RRGGBB format.</description>
++    </key>
++
++    <!-- graph line thickness -->
++    <key name="graph-line" type="i">
++      <range min="1" max="10"/>
++      <default>2</default>
++      <summary>Graph line width</summary>
++      <description>Thickness, in pixels, of the graph line.</description>
++    </key>
++
++    <!-- graph fill opacity -->
++    <key name="graph-fill-opacity" type="d">
++      <range min="0.0" max="1.0"/>
++      <default>0.5</default>
++      <summary>Graph fill opacity</summary>
++      <description>Opacity, from 0.0 to 1.0, of the area filled below the graph line.</description>
++    </key>
++  </schema>
++</schemalist>
+diff -ruN a/src/nemo-progress-info-widget.c b/src/nemo-progress-info-widget.c
+--- a/src/nemo-progress-info-widget.c	2026-01-08 13:29:19.000000000 +0000
++++ b/src/nemo-progress-info-widget.c	2026-08-19 21:57:37.191389032 +0000
+@@ -64,25 +64,144 @@
+ static void
+ update_progress (NemoProgressInfoWidget *self)
+ {
+-	double progress;
++	NemoProgressInfoWidgetPriv *priv = self->priv;
++    
++	double progress = nemo_progress_info_get_progress (priv->info);
+ 
+-	progress = nemo_progress_info_get_progress (self->priv->info);
+ 	if (progress < 0) {
+-		gtk_progress_bar_pulse (GTK_PROGRESS_BAR (self->priv->progress_bar));
++		gtk_progress_bar_pulse (GTK_PROGRESS_BAR (priv->progress_bar));
+ 	} else {
+-		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (self->priv->progress_bar), progress);
++		gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (priv->progress_bar), progress);
+ 	}
++
++	/* bandwidth graph */
++	double speed = nemo_progress_info_get_speed (priv->info);
++	if (progress > 0 && speed > 0) {
++		int slot = (int)(progress * (MAX_GRAPH_POINTS - 1));
++		if (slot >= MAX_GRAPH_POINTS) slot = MAX_GRAPH_POINTS - 1;
++
++		if (priv->graph_data[slot] > 0)
++			priv->graph_data[slot] = (priv->graph_data[slot] + speed) / 2.0;
++		else
++			priv->graph_data[slot] = speed;
++
++		if (slot>priv->graph_count)
++			priv->graph_count = slot;
++
++		gtk_widget_queue_draw (priv->speed_graph);
++	}
++}
++
++static void
++progress_widget_update_toggle_label (NemoProgressInfoWidget *self)
++{
++	NemoProgressInfoWidgetPriv *priv = self->priv;
++	GtkWidget *label = gtk_bin_get_child (GTK_BIN (priv->toggle_button));
++
++	gtk_label_set_text (GTK_LABEL (label),
++			     priv->show_graph ? _("▴ Less") : _("▾ More"));
++	gtk_widget_set_size_request (priv->speed_graph,-1,
++									priv->show_graph ? 80 : 0);
+ }
+ 
+ static void
+ on_info_started (NemoProgressInfoWidget *self) {
+-    gtk_stack_set_visible_child_name (GTK_STACK (self->priv->stack), "running");
++	NemoProgressInfoWidgetPriv *priv = self->priv;
++	priv->graph_ymax = 0;
++
++	priv->is_delete_mode = nemo_progress_info_get_delete_mode (priv->info);
++
++	progress_widget_get_graph_color (self, priv->is_delete_mode, &priv->graph_color);
++	priv->graph_line_width   = progress_widget_get_graph_line_width ();
++	priv->graph_fill_opacity = progress_widget_get_graph_fill_opacity ();
++
++	priv->show_graph = progress_widget_get_persisted_show_graph ();
++	progress_widget_update_toggle_label (self);
++	
++	gtk_stack_set_visible_child_name (GTK_STACK (priv->stack), "running");
+ }
+ 
+ static void
+ on_info_finished (NemoProgressInfoWidget *self)
+ {
+-    gtk_widget_destroy (GTK_WIDGET (self));
++	gtk_widget_destroy (GTK_WIDGET (self));
++}
++
++static gboolean
++on_graph_draw (GtkWidget *widget, cairo_t *cr, NemoProgressInfoWidget *self)
++{
++	NemoProgressInfoWidgetPriv *priv = self->priv;
++	if (!priv->show_graph) return FALSE;
++
++	int w = gtk_widget_get_allocated_width (widget);
++	int h = gtk_widget_get_allocated_height (widget);
++	/* grid */
++	cairo_set_antialias (cr, CAIRO_ANTIALIAS_NONE);
++	cairo_set_source_rgba (cr, 0.8, 0.8, 0.8, 1);
++	cairo_set_line_width (cr, 0.5);
++	for (int i = 1; i < 4; i++) {
++		double y = (int)(h * i / 4.0) + 0.5;
++		cairo_move_to (cr, 0, y);
++		cairo_line_to (cr, w, y);
++	}
++	cairo_stroke (cr);
++	cairo_set_antialias (cr, CAIRO_ANTIALIAS_DEFAULT);
++
++	/* create curve */
++	cairo_move_to (cr, 0 , h);
++	double prev_x = -1, prev_y = -1;
++	gdouble max_speed = 0;
++	for (int i = 0; i <= priv->graph_count; i++) {
++		if (priv->graph_data[i] > max_speed)
++			max_speed = priv->graph_data[i];
++	}
++	priv->graph_ymax = max_speed > 0 ? max_speed * 1.2 : 1.0;
++
++	for (int i = 0; i <= priv->graph_count; i++) {
++		if (priv->graph_data[i] > 0) {
++			double x = i * w / MAX_GRAPH_POINTS;
++			double y = h - (priv->graph_data[i] / priv->graph_ymax) * (h - 4);
++			if (prev_x < 0) {
++				cairo_line_to (cr, 0, y);
++			} else {
++				double midx = (prev_x + x) / 2.0;
++				cairo_curve_to (cr, midx, prev_y, midx, y, x, y);
++			}
++			prev_x = x;
++			prev_y = y;
++		}
++	}
++
++	/* curve line */
++	cairo_set_source_rgba (cr, priv->graph_color.red, priv->graph_color.green, priv->graph_color.blue, 1.0);
++	cairo_set_line_width (cr, priv->graph_line_width);
++	cairo_stroke_preserve (cr);
++
++	/* fill under curve */
++	cairo_set_source_rgba (cr, priv->graph_color.red, priv->graph_color.green, priv->graph_color.blue,
++				priv->graph_fill_opacity);
++	cairo_line_to (cr, priv->graph_count * w / MAX_GRAPH_POINTS, h);
++	cairo_fill (cr);
++
++	/* graph max label */
++	char max_label[32];
++	if (priv->is_delete_mode) {
++		g_snprintf (max_label, sizeof (max_label), "%.1f files/s", max_speed);
++	} else if (max_speed > 1024 * 1024) {
++		g_snprintf (max_label, sizeof (max_label), "%.1f MB/s", max_speed / 1000000);
++	} else if (max_speed > 1024) {
++		g_snprintf (max_label, sizeof (max_label), "%.1f kB/s", max_speed / 1000);
++	} else {
++		g_snprintf (max_label, sizeof (max_label), "%.0f B/s", max_speed);
++	}
++
++	cairo_set_source_rgba (cr, priv->graph_color.red, priv->graph_color.green, priv->graph_color.blue, 1);
++	cairo_select_font_face (cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
++	cairo_set_font_size (cr, 12);
++	cairo_move_to (cr, 2, 10);
++	cairo_show_text (cr, max_label);
++
++	return FALSE;
+ }
+ 
+ static void
+@@ -97,6 +216,18 @@
+ 	gtk_widget_set_sensitive (button, FALSE);
+ }
+ 
++static gboolean
++toggle_graph_clicked (GtkWidget *button, GdkEventButton *event, NemoProgressInfoWidget *self)
++{
++	NemoProgressInfoWidgetPriv *priv = self->priv;
++	priv->show_graph = !priv->show_graph;
++	progress_widget_set_persisted_show_graph (priv->show_graph);
++	gtk_widget_queue_draw (priv->speed_graph);
++	progress_widget_update_toggle_label (self);
++
++	return GDK_EVENT_STOP;
++}
++
+ static void
+ start_pause_clicked (GtkWidget *button,
+                NemoProgressInfoWidget *self)
+@@ -204,6 +335,18 @@
+ 	progress_bar = gtk_progress_bar_new ();
+ 	priv->progress_bar = progress_bar;
+ 	gtk_progress_bar_set_pulse_step (GTK_PROGRESS_BAR (progress_bar), 0.05);
++
++	/* bandwidth graph */
++	priv->is_delete_mode = nemo_progress_info_get_delete_mode (priv->info);
++	progress_widget_get_graph_color (self, priv->is_delete_mode, &priv->graph_color);
++	priv->graph_line_width   = progress_widget_get_graph_line_width ();
++	priv->graph_fill_opacity = progress_widget_get_graph_fill_opacity ();
++	priv->speed_graph = gtk_drawing_area_new ();
++	priv->show_graph = nemo_progress_info_get_is_started (priv->info) ?
++		progress_widget_get_persisted_show_graph () : FALSE;
++	gtk_box_pack_start (GTK_BOX (vbox), priv->speed_graph, TRUE, FALSE, 2);
++	g_signal_connect (priv->speed_graph, "draw", G_CALLBACK (on_graph_draw), self);
++
+ 	gtk_box_pack_start(GTK_BOX (vbox), progress_bar, TRUE, FALSE, 2);
+ 
+     label = gtk_label_new ("details");
+@@ -214,6 +357,19 @@
+     gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 2);
+     priv->details = label;
+ 
++	priv->toggle_button = gtk_event_box_new ();
++	gtk_event_box_set_visible_window (GTK_EVENT_BOX (priv->toggle_button), FALSE);
++	gtk_widget_set_halign (priv->toggle_button, GTK_ALIGN_START);
++	label = gtk_label_new (NULL);
++	gtk_widget_set_halign (label, GTK_ALIGN_START);
++	gtk_container_add (GTK_CONTAINER (priv->toggle_button), label);
++	gtk_widget_show (label);
++	progress_widget_update_toggle_label (self);
++	g_signal_connect (priv->toggle_button, "button-press-event",
++					G_CALLBACK (toggle_graph_clicked), self);
++	gtk_box_pack_start (GTK_BOX (vbox), priv->toggle_button, FALSE, FALSE, 0);
++	gtk_widget_set_no_show_all (priv->toggle_button, TRUE);
++
+     bb = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
+     gtk_widget_set_halign (bb, GTK_ALIGN_START);
+     gtk_widget_set_valign (bb, GTK_ALIGN_CENTER);
+@@ -256,9 +412,9 @@
+ 
+ static void
+ nemo_progress_info_widget_set_property (GObject *object,
+-					    guint property_id,
+-					    const GValue *value,
+-					    GParamSpec *pspec)
++						guint property_id,
++						const GValue *value,
++						GParamSpec *pspec)
+ {
+ 	NemoProgressInfoWidget *self = NEMO_PROGRESS_INFO_WIDGET (object);
+ 
+@@ -277,8 +433,6 @@
+ {
+ 	self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, NEMO_TYPE_PROGRESS_INFO_WIDGET,
+ 						  NemoProgressInfoWidgetPriv);
+-
+-	
+ }
+ 
+ static void
+@@ -293,11 +447,11 @@
+ 
+ 	properties[PROP_INFO] =
+ 		g_param_spec_object ("info",
+-				     "NemoProgressInfo",
+-				     "The NemoProgressInfo associated with this widget",
+-				     NEMO_TYPE_PROGRESS_INFO,
+-				     G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY |
+-				     G_PARAM_STATIC_STRINGS);
++					 "NemoProgressInfo",
++					 "The NemoProgressInfo associated with this widget",
++					 NEMO_TYPE_PROGRESS_INFO,
++					 G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY |
++					 G_PARAM_STATIC_STRINGS);
+ 
+ 	g_object_class_install_properties (oclass, NUM_PROPERTIES, properties);
+ 
+@@ -308,9 +462,15 @@
+ nemo_progress_info_widget_new (NemoProgressInfo *info)
+ {
+ 	return g_object_new (NEMO_TYPE_PROGRESS_INFO_WIDGET,
+-			     "info", info,
+-			     "orientation", GTK_ORIENTATION_VERTICAL,
+-			     "homogeneous", FALSE,
+-			     "spacing", 5,
+-			     NULL);
++				 "info", info,
++				 "orientation", GTK_ORIENTATION_VERTICAL,
++				 "homogeneous", FALSE,
++				 "spacing", 5,
++				 NULL);
++}
++
++void
++nemo_progress_info_widget_set_show_toggle (NemoProgressInfoWidget *self, gboolean visible)
++{
++	gtk_widget_set_visible (self->priv->toggle_button, visible);
+ }
+diff -ruN a/src/nemo-progress-info-widget.h b/src/nemo-progress-info-widget.h
+--- a/src/nemo-progress-info-widget.h	2026-01-08 13:29:19.000000000 +0000
++++ b/src/nemo-progress-info-widget.h	2026-08-19 21:56:50.870049130 +0000
+@@ -62,16 +62,30 @@
+     GtkWidget *stack;
+     GtkWidget *separator;
+ 
+-    /* pre-start page */
++/* pre-start page */
+     GtkWidget *pre_info; /* GtkLabel */
+ 
+     GtkWidget *status; /* GtkLabel */
+     GtkWidget *details; /* GtkLabel */
+     GtkWidget *progress_bar;
++    GtkWidget *toggle_button;
++    
++/* bandwith graph */
++	#define MAX_GRAPH_POINTS 200
++	GtkWidget *speed_graph;
++	double graph_data[MAX_GRAPH_POINTS];
++	int graph_count;
++	double graph_ymax;
++	gboolean is_delete_mode;
++	gboolean show_graph;
++	GdkRGBA  graph_color;
++	gint    graph_line_width;
++	gdouble graph_fill_opacity;
+ };
+ 
+ GType nemo_progress_info_widget_get_type (void);
+ 
+ GtkWidget * nemo_progress_info_widget_new (NemoProgressInfo *info);
++void nemo_progress_info_widget_set_show_toggle (NemoProgressInfoWidget *self, gboolean visible);
+ 
+ #endif /* __NEMO_PROGRESS_INFO_WIDGET_H__ */
+diff -ruN a/src/nemo-progress-ui-handler.c b/src/nemo-progress-ui-handler.c
+--- a/src/nemo-progress-ui-handler.c	2026-01-08 13:29:19.000000000 +0000
++++ b/src/nemo-progress-ui-handler.c	2026-08-19 21:56:50.870150551 +0000
+@@ -157,6 +157,21 @@
+ }
+ 
+ static void
++progress_ui_handler_update_toggle_visibility (NemoProgressUIHandler *self)
++{
++    GList *l = gtk_container_get_children (GTK_CONTAINER (self->priv->list));
++    GList *iter;
++    gboolean first = TRUE;
++
++    for (iter = l; iter != NULL; iter = iter->next) {
++        nemo_progress_info_widget_set_show_toggle (NEMO_PROGRESS_INFO_WIDGET (iter->data), first);
++        first = FALSE;
++    }
++
++    g_list_free (l);
++}
++
++static void
+ progress_ui_handler_sort_by_active (NemoProgressUIHandler *self)
+ {
+     gint first_pending = -1;
+@@ -257,6 +272,7 @@
+ 
+     ensure_first_separator_hidden (self);
+     progress_ui_handler_sort_by_active (self);
++    progress_ui_handler_update_toggle_visibility (self);
+ }
+ 
+ static void
+@@ -293,6 +309,7 @@
+ 		}
+ 
+         ensure_first_separator_hidden (self);
++        progress_ui_handler_update_toggle_visibility (self);
+ 	} else {
+ 		if (gtk_widget_get_visible (self->priv->progress_window)) {
+ 			gtk_widget_hide (self->priv->progress_window);
+@@ -342,6 +359,7 @@
+ {
+     progress_ui_handler_sort_by_active (self);
+     ensure_first_separator_hidden (self);
++    progress_ui_handler_update_toggle_visibility (self);
+ }
+ 
+ static void
