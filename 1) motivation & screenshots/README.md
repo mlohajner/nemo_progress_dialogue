@@ -2,14 +2,14 @@
 
 This directory contains the motivation for the proposed bandwidth graph enhancement and visual comparisons between Nemo's current file transfer dialog and the proposed design.
 
-## Current Nemo Dialog
+## Normal Nemo Progress Dialog
 
 The default Nemo transfer dialog displays progress information but does not provide throughput history or performance visualization.
 
 <img src="classic1.png" width="40%" align="left">
 <img src="classic2.png" width="40%">
 
-## Enhanced Dialog
+## Enhanced Progress Dialog
 
 The proposed design adds a real-time bandwidth graph and transfer speed visualization while preserving the existing workflow and overall layout.
 
