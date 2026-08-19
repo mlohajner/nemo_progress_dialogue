@@ -13,9 +13,9 @@ The default Nemo transfer dialog displays progress information but does not prov
 
 The proposed design adds a real-time bandwidth graph and transfer speed visualization while preserving the existing workflow and overall layout.
 
-![Proposed Nemo Dialog1](dialogue1.png)
-![Proposed Nemo Dialog2](dialogue2.png)
-![Proposed Nemo Dialog3](dialogue3.png)
+<img src="dialogue1.png" width="40%" align="left">
+<img src="dialogue2.png" width="40%">
+<img src="dialogue3.png" width="40%">
 
 ## GSettings schema (for persistance and customisation)
 
