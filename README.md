@@ -2,18 +2,17 @@
 
 Instead of only showing *progress %,* users can now see **how fast the operation is actually performing and how it changes over time** — live, not averaged.
 
-Enhanced Nemo Progress Dialog:
-- Progress bar
-- Real-time speed indicator
-- Bandwidth history graph
-- Delete operations get their own inverted accent color -distinguishable from a transfer at a glance
-- More / Less (show or hide graph)
-- dedicated GSettings schema /org/nemo/transfer-graph for:
-  - delete-graph-color
-  - transfer-graph-color
-  - graph-fill-opacity
-  - graph-line width
-  - show-transfer-graph (Show/Hide persistency)
+## Features
+- Real-time transfer and delete speed monitoring (MB/s, KB/s, B/s, files/s)
+- Live bandwidth graph over time
+  Actual transfer rate - the graph reacts immediately to speed changes (USB, network shares)
+- Automatic graph scaling based on throughput
+- Delete operations use distinct or inverted accent color, giving an instant visual cue that the operation is destructive
+- Works for copy, move and delete operations
+- More / Less option to show and hide graph with GSettings scheme persistance
+- Extended GSettings scheme for persistance and customisation
+  Transfer color, delete color, graph line thickness, and graph fill opacity.
+- Minimal performance overhead
 
 | Nemo Transfer Progress | Nemo Delete Progress |
 |:-:|:-:|
@@ -29,21 +28,6 @@ It upgrades the default progress dialog with live throughput visualization, simi
 - Windows File Explorer
 
 This patch enhances it by adding a **real-time bandwidth graph**, making operation performance visible over time.
-
-## Features
-
-- Real-time transfer and delete speed monitoring (MB/s, KB/s, B/s, files/s)
-- Live bandwidth graph over time
-  Actual transfer rate - the graph reacts immediately to speed changes (USB, network shares)
-- Automatic graph scaling based on throughput
-- Delete operations use distinct or inverted accent color, giving an instant visual cue that the operation is destructive
-- Works for copy, move and delete operations
-- More / Less option to show and hide graph with GSettings scheme persistance
-- Extended GSettings scheme for persistance and customisation
-  Transfer color, delete color, graph line thickness, and graph fill opacity.
-- Minimal performance overhead
-
----
 
 ## Motivation
 
