@@ -2,13 +2,7 @@
 
 Instead of only showing *progress %,* users can now see **how fast the operation is actually performing and how it changes over time** — live, not averaged.
 
-Before:
-- Progress bar only
-- Estimated time remaining
-
-![Nemo Progress Dialog](1%29%20motivation%20%26%20screenshots/classic1.png)
-
-After:
+Enhanced Nemo Progress Dialog:
 - Progress bar
 - Real-time speed indicator
 - Bandwidth history graph
