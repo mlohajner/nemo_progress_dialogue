@@ -220,6 +220,8 @@ progress_widget_update_toggle_label (NemoProgressInfoWidget *self)
 
 	gtk_label_set_text (GTK_LABEL (label),
 			     priv->show_graph ? _("▴ Less") : _("▾ More"));
+	gtk_widget_set_size_request (priv->speed_graph,-1,
+									priv->show_graph ? 80 : 0);
 }
 
 static void
@@ -233,8 +235,9 @@ on_info_started (NemoProgressInfoWidget *self) {
 	priv->graph_line_width   = progress_widget_get_graph_line_width ();
 	priv->graph_fill_opacity = progress_widget_get_graph_fill_opacity ();
 
-	gtk_widget_set_size_request(priv->speed_graph, -1, 80);
+	priv->show_graph = progress_widget_get_persisted_show_graph ();
 	progress_widget_update_toggle_label (self);
+	
 	gtk_stack_set_visible_child_name (GTK_STACK (priv->stack), "running");
 }
 
@@ -344,7 +347,6 @@ toggle_graph_clicked (GtkWidget *button, GdkEventButton *event, NemoProgressInfo
 	NemoProgressInfoWidgetPriv *priv = self->priv;
 	priv->show_graph = !priv->show_graph;
 	progress_widget_set_persisted_show_graph (priv->show_graph);
-	gtk_widget_set_size_request (priv->speed_graph, -1, priv->show_graph ? 80 : 0);
 	gtk_widget_queue_draw (priv->speed_graph);
 	progress_widget_update_toggle_label (self);
 
